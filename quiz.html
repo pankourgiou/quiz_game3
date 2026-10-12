@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atelier IV — the grand salon</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Instrument+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#190d1c;--paper:#f3ead7;--mute:#b5a6c4;--verd:#3fb8a0;--saff:#f2b134;--rose:#e8546f;
+--serif:'Fraunces',Georgia,'Times New Roman',serif;--sans:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(1200px 700px at 20% 0%,#4a1d3f 0%,var(--ink) 62%);color:var(--paper);font-family:var(--sans);line-height:1.5;padding:max(20px,env(safe-area-inset-top)) 20px 28px}
+main{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:36px;align-items:center;min-height:calc(100vh - 56px)}
+@media(max-width:820px){main{grid-template-columns:1fr;gap:20px}}
+.canvaswrap{aspect-ratio:1;width:100%;max-width:520px;margin:0 auto;border-radius:6px;overflow:hidden;box-shadow:0 0 0 10px #3a1a35,0 0 0 11px #8a4a7c,0 30px 60px #0008}
+canvas{width:100%;height:100%;display:block;background:#ece1c8}
+h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.6rem,6vw,4.4rem);line-height:1;letter-spacing:-.02em}
+h1 i{font-weight:400;color:var(--saff)}
+.lede{font-family:var(--serif);font-size:1.2rem;color:var(--mute);margin:18px 0 26px;max-width:34ch}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:26px}
+.chip{--c:var(--paper);border:1.5px solid var(--c);color:var(--c);background:none;border-radius:999px;padding:9px 16px;font:600 .92rem var(--sans);cursor:pointer;transition:.18s}
+.chip[aria-pressed=true]{background:var(--c);color:var(--ink)}
+button:focus-visible{outline:3px solid var(--saff);outline-offset:3px}
+.go{background:var(--saff);color:var(--ink);border:0;border-radius:4px;padding:14px 26px;font:600 1.05rem var(--sans);cursor:pointer}
+.go.ghost{background:none;color:var(--paper);border:1.5px solid var(--mute);margin-left:10px}
+.go:hover{filter:brightness(1.08)}
+.meta{display:flex;justify-content:space-between;color:var(--mute);font-size:.9rem;margin-bottom:10px}
+.bar{height:3px;background:#4a2a48;margin-bottom:26px}.bar b{display:block;height:100%;width:0;background:var(--saff);transition:width .4s}
+.cat{font-weight:600;margin-bottom:8px}
+.q{font-family:var(--serif);font-size:clamp(1.5rem,3.2vw,2.1rem);line-height:1.2;margin-bottom:24px;max-width:26ch}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;background:#ffffff0d;color:var(--paper);border:1.5px solid #ffffff26;border-radius:6px;padding:13px 16px;font:400 1.02rem var(--sans);cursor:pointer;display:flex;gap:14px;transition:.15s}
+.opt:hover:not(:disabled){background:#ffffff1c;transform:translateX(4px)}
+.opt kbd{font:600 .8rem var(--sans);color:var(--mute);min-width:1ch}
+.opt.ok{background:#3fb8a033;border-color:var(--verd)}
+.opt.no{background:#e8546f2e;border-color:var(--rose)}
+.opt:disabled{cursor:default;color:inherit}
+.why{margin-top:18px;font-family:var(--serif);font-size:1.08rem;color:#e0d6e8;min-height:3.2em}
+.next{margin-top:12px}
+.hide{display:none!important}
+.score{font-family:var(--serif);font-size:5rem;line-height:1;font-weight:600}
+.rows{margin:22px 0;display:grid;gap:9px}
+.row{display:grid;grid-template-columns:90px 1fr 40px;gap:10px;align-items:center;font-size:.92rem}
+.row span{height:8px;background:#4a2a48;border-radius:4px;overflow:hidden}.row span i{display:block;height:100%}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+ <div class="canvaswrap"><canvas id="cv" width="900" height="900" aria-label="Your painting, which grows with every correct answer"></canvas></div>
+ <section>
+  <div id="start">
+   <h1>Atelier IV<br><i>the grand salon</i></h1>
+   <p class="lede">Sixty questions across six rooms: cinema, earth, words, inventions, the body and buildings. Twenty-five per round.</p>
+   <div class="chips" id="chips"></div>
+   <button class="go" id="begin">Begin the painting</button>
+  </div>
+  <div id="play" class="hide">
+   <div class="meta"><span id="cnt"></span><span id="streak"></span></div>
+   <div class="bar"><b id="prog"></b></div>
+   <div class="cat" id="cat"></div>
+   <h2 class="q" id="q"></h2>
+   <div class="opts" id="opts"></div>
+   <p class="why" id="why" aria-live="polite"></p>
+   <button class="go next hide" id="next">Next question</button>
+  </div>
+  <div id="end" class="hide">
+   <p class="lede" id="title" style="margin-bottom:6px"></p>
+   <div class="score" id="score"></div>
+   <div class="rows" id="rows"></div>
+   <button class="go" id="again">Paint again</button><button class="go ghost" id="save">Save painting</button>
+  </div>
+ </section>
+</main>
+<script>
+const C={Cinema:'#e8546f',Earth:'#3fb8a0',Words:'#f2b134',Inventions:'#4a6cf7',Body:'#ff8a4c',Buildings:'#b07cf2'};
+// [category, question, correct, wrong1, wrong2, wrong3, explanation]
+const Q=[
+["Cinema","Who directed Jaws?","Steven Spielberg","Ridley Scott","George Lucas","Francis Ford Coppola","The 1975 thriller is often called the first summer blockbuster."],
+["Cinema","Which 1927 film was the first major feature with synchronized dialogue?","The Jazz Singer","Metropolis","Sunrise","The Kid","It ended the silent era."],
+["Cinema","Who directed Psycho?","Alfred Hitchcock","Orson Welles","Stanley Kubrick","Billy Wilder","The 1960 film's shower scene is among cinema's most analyzed."],
+["Cinema","Which Japanese director made Seven Samurai?","Akira Kurosawa","Hayao Miyazaki","Yasujiro Ozu","Takeshi Kitano","Released in 1954."],
+["Cinema","Which studio made Toy Story, the first fully computer-animated feature?","Pixar","DreamWorks","Blue Sky","Illumination","Toy Story arrived in 1995."],
+["Cinema","Who directed 2001: A Space Odyssey?","Stanley Kubrick","Steven Spielberg","Ridley Scott","Andrei Tarkovsky","Released in 1968, with visual effects far ahead of its time."],
+["Cinema","The Lumière brothers, early film pioneers, were from which country?","France","USA","Britain","Germany","They screened films to a paying audience in Paris in 1895."],
+["Cinema","\"Here's looking at you, kid\" is from which film?","Casablanca","Gone with the Wind","Citizen Kane","Vertigo","Humphrey Bogart says it in the 1942 classic."],
+["Cinema","Who directed and starred in Citizen Kane?","Orson Welles","Charlie Chaplin","Buster Keaton","John Huston","Welles was just 25 when it came out in 1941."],
+["Cinema","What was Charlie Chaplin's best-known character called?","The Tramp","The Kid","The Drifter","The Clown","The bowler hat and cane became iconic."],
+["Earth","Which layer of Earth is liquid?","Outer core","Mantle","Inner core","Crust","The inner core is solid; the churning outer core creates our magnetic field."],
+["Earth","Which is the world's tallest uninterrupted waterfall?","Angel Falls","Niagara Falls","Victoria Falls","Iguazu Falls","In Venezuela, with a drop of about 979 m."],
+["Earth","Which continent is the driest?","Antarctica","Africa","Australia","Asia","It's a polar desert with very little precipitation."],
+["Earth","Which volcano buried Pompeii in 79 CE?","Vesuvius","Etna","Krakatoa","Stromboli","It still looms over the Bay of Naples."],
+["Earth","Which is the world's largest hot desert?","Sahara","Arabian","Gobi","Kalahari","About 9 million km² across North Africa."],
+["Earth","Which is the deepest known ocean trench?","Mariana Trench","Tonga Trench","Java Trench","Puerto Rico Trench","Its Challenger Deep is nearly 11 km down."],
+["Earth","Which atmospheric layer do we live in?","Troposphere","Stratosphere","Mesosphere","Thermosphere","It holds most of the air and nearly all weather."],
+["Earth","Rock formed from cooled magma or lava is…","Igneous","Sedimentary","Metamorphic","Organic","Granite and basalt are both igneous."],
+["Earth","Most of the Amazon rainforest lies in which country?","Brazil","Peru","Colombia","Venezuela","Roughly 60% of it is in Brazil."],
+["Earth","Which is the hardest natural mineral on the Mohs scale?","Diamond","Quartz","Corundum","Topaz","Diamond is a 10; corundum is a 9."],
+["Words","Which language has the most native speakers?","Mandarin Chinese","English","Spanish","Hindi","English has the most total speakers when second-language users are counted."],
+["Words","How many letters are in the modern Greek alphabet?","24","26","22","28","From alpha to omega."],
+["Words","\"Bonjour\" is a greeting in which language?","French","Italian","Portuguese","Romanian","It literally means good day."],
+["Words","The study of the origin of words is called…","Etymology","Entomology","Etiology","Epistemology","Entomology is the study of insects."],
+["Words","A word that reads the same backwards is a…","Palindrome","Anagram","Homonym","Acronym","Like \"level\" or \"racecar\"."],
+["Words","Which script is used to write Russian?","Cyrillic","Latin","Greek","Glagolitic","Named after Saint Cyril."],
+["Words","The word \"alphabet\" comes from the first two letters of which alphabet?","Greek","Latin","Phoenician","Hebrew","Alpha plus beta."],
+["Words","In Japanese, \"ohayō\" means…","Good morning","Thank you","Goodbye","Excuse me","Ohayō gozaimasu is the polite form."],
+["Words","Which language is written right to left?","Arabic","Thai","Korean","Hindi","So are Hebrew and Persian."],
+["Words","A word with the opposite meaning of another is its…","Antonym","Synonym","Homophone","Acronym","Hot and cold are antonyms."],
+["Inventions","Who received the first US patent for the telephone in 1876?","Alexander Graham Bell","Thomas Edison","Nikola Tesla","Guglielmo Marconi","He beat a rival filing by just hours."],
+["Inventions","Who introduced movable-type printing to Europe?","Johannes Gutenberg","Leonardo da Vinci","Galileo Galilei","William Caxton","Around 1440, in Mainz."],
+["Inventions","In which year did the Wright brothers make their first powered flight?","1903","1895","1910","1927","It lasted 12 seconds at Kitty Hawk."],
+["Inventions","Who discovered penicillin?","Alexander Fleming","Louis Pasteur","Jonas Salk","Joseph Lister","He noticed mold killing bacteria in 1928."],
+["Inventions","Who invented dynamite and later endowed the Nobel Prizes?","Alfred Nobel","Nikola Tesla","Fritz Haber","Marie Curie","Patented in 1867."],
+["Inventions","The magnetic compass was first developed in…","China","Greece","Egypt","India","Early versions date to the Han dynasty."],
+["Inventions","What was the first artificial satellite?","Sputnik 1","Explorer 1","Vostok 1","Telstar","Launched by the USSR in October 1957."],
+["Inventions","Who developed the first widely used polio vaccine?","Jonas Salk","Edward Jenner","Alexander Fleming","Louis Pasteur","It was announced in 1955."],
+["Inventions","Guglielmo Marconi pioneered which technology?","Radio","Television","Radar","The telephone","He sent signals across the Atlantic in 1901."],
+["Inventions","Paper as we know it was invented in…","China","Egypt","Greece","Mesopotamia","Traditionally credited to Cai Lun around 105 CE."],
+["Body","How many bones does an adult human have?","206","186","256","306","Babies are born with around 270 that fuse together."],
+["Body","What is the body's largest organ?","Skin","Liver","Brain","Lungs","It covers about 2 m² on an adult."],
+["Body","Which vitamin does skin make from sunlight?","Vitamin D","Vitamin C","Vitamin A","Vitamin K","It helps absorb calcium."],
+["Body","Which blood type is the universal red-cell donor?","O negative","AB positive","A positive","B negative","It lacks A, B and Rh antigens."],
+["Body","Which part of the brain coordinates balance?","Cerebellum","Cerebrum","Hippocampus","Thalamus","It also fine-tunes movement."],
+["Body","How many chambers does the human heart have?","4","2","3","5","Two atria and two ventricles."],
+["Body","What is the smallest bone in the human body?","Stapes","Femur","Hyoid","Patella","It sits in the middle ear and is about 3 mm long."],
+["Body","Which organ produces insulin?","Pancreas","Liver","Kidney","Spleen","It regulates blood sugar."],
+["Body","Normal human body temperature is about…","37 °C","35 °C","39 °C","41 °C","That's about 98.6 °F."],
+["Body","What do white blood cells primarily do?","Fight infection","Carry oxygen","Clot blood","Digest food","They are the immune system's foot soldiers."],
+["Buildings","Who designed the Sagrada Família in Barcelona?","Antoni Gaudí","Le Corbusier","Frank Gehry","Santiago Calatrava","Construction began in 1882 and continues today."],
+["Buildings","The Parthenon crowns which hill?","Acropolis of Athens","Palatine Hill","Capitoline Hill","Mount Lycabettus","Completed in 438 BCE, dedicated to Athena."],
+["Buildings","The Burj Khalifa, the world's tallest building, stands in…","Dubai","Shanghai","Kuala Lumpur","New York","It rises to 828 m."],
+["Buildings","The Taj Mahal was built as a…","Mausoleum","Palace","Fortress","Temple","Shah Jahan built it for his wife Mumtaz Mahal."],
+["Buildings","Who designed the house Fallingwater?","Frank Lloyd Wright","Mies van der Rohe","Walter Gropius","Eero Saarinen","Built over a waterfall in Pennsylvania in 1937."],
+["Buildings","Gothic cathedrals are known for pointed arches and…","Flying buttresses","Geodesic domes","Doric columns","Minarets","They let walls rise high and hold big windows."],
+["Buildings","When was the Eiffel Tower completed?","1889","1900","1851","1925","Built for the Paris World's Fair."],
+["Buildings","Who designed the Sydney Opera House?","Jørn Utzon","Norman Foster","Zaha Hadid","I. M. Pei","The Danish architect won an international competition in 1957."],
+["Buildings","In which city is the Hagia Sophia?","Istanbul","Athens","Rome","Cairo","Built as a church in 537 CE."],
+["Buildings","Which is the simplest of the classical Greek column orders?","Doric","Ionic","Corinthian","Tuscan","The Parthenon uses Doric columns; Tuscan is Roman."]
+];
+const $=id=>document.getElementById(id),cv=$('cv'),x=cv.getContext('2d'),W=900,N=25;
+let sel=new Set(Object.keys(C)),deck,i,score,streak,shapes,tally,locked,raf;
+const rnd=(a,b)=>a+Math.random()*(b-a),shuf=a=>{a=[...a];for(let n=a.length;n;){const j=Math.random()*n--|0;[a[n],a[j]]=[a[j],a[n]]}return a};
+
+const chips=$('chips');
+Object.keys(C).forEach(k=>{const b=document.createElement('button');b.className='chip';b.textContent=k;b.style.setProperty('--c',C[k]);b.setAttribute('aria-pressed',true);
+ b.onclick=()=>{const on=b.getAttribute('aria-pressed')!=='true';if(!on&&sel.size===1)return;b.setAttribute('aria-pressed',on);on?sel.add(k):sel.delete(k)};chips.append(b)});
+
+function bg(){const g=x.createLinearGradient(0,0,W,W);g.addColorStop(0,'#f3ead7');g.addColorStop(1,'#e4d6b6');x.fillStyle=g;x.fillRect(0,0,W,W);
+ x.globalAlpha=.05;for(let n=0;n<900;n++){x.fillStyle=n%2?'#000':'#fff';x.fillRect((n*97)%W,(n*53)%W,2,2)}x.globalAlpha=1}
+function draw(s,t){const e=1-Math.pow(1-t,3),r=s.r*e,k=s.k,P='#ece1c8';x.save();x.translate(s.x,s.y);x.rotate(s.a);x.fillStyle=x.strokeStyle=s.c;x.lineCap=x.lineJoin='round';
+ const tri=(a,b,c,d,f,g)=>{x.beginPath();x.moveTo(a,b);x.lineTo(c,d);x.lineTo(f,g);x.closePath();x.fill()};
+ if(k==='x'){x.globalAlpha=.35*t;x.lineWidth=2;x.strokeStyle='#5c5a6e';x.beginPath();x.moveTo(-r,0);x.lineTo(r,s.r*.2*e);x.stroke()}
+ else if(k==='Cinema'){x.lineWidth=5;x.globalAlpha=.9*t;x.strokeRect(-r*.8,-r*.55,r*1.6,r*1.1);for(let n=-3;n<=3;n++){x.fillRect(n*r*.22-r*.05,-r*.48,r*.1,r*.1);x.fillRect(n*r*.22-r*.05,r*.38,r*.1,r*.1)}x.globalAlpha=.8*t;tri(-r*.2,-r*.25,r*.3,0,-r*.2,r*.25)}
+ else if(k==='Earth'){x.globalAlpha=.85*t;tri(-r*.9,r*.5,-r*.2,-r*.5,r*.4,r*.5);x.globalAlpha=.6*t;tri(0,r*.5,r*.45,-r*.15,r*.95,r*.5);x.globalAlpha=t;x.beginPath();x.arc(r*.5,-r*.6,r*.14,0,7);x.fill()}
+ else if(k==='Words'){x.lineWidth=6;for(let n=0;n<5;n++){x.globalAlpha=.85*t;x.beginPath();x.moveTo(-r*.8,(n-2)*r*.3);x.lineTo(-r*.8+r*(1.6-(n%3)*.4)*e/e,(n-2)*r*.3);x.stroke()}}
+ else if(k==='Inventions'){x.globalAlpha=.9*t;x.beginPath();for(let n=0;n<8;n++){const a=n*Math.PI/4,p=[[.7,-.2],[1,-.12],[1,.12],[.7,.2]];p.forEach(([q,d])=>x.lineTo(r*q*Math.cos(a+d),r*q*Math.sin(a+d)))}x.closePath();x.fill();x.globalAlpha=1;x.fillStyle=P;x.beginPath();x.arc(0,0,r*.3,0,7);x.fill()}
+ else if(k==='Body'){x.lineWidth=6;x.globalAlpha=.9*t;x.beginPath();[[-1,0],[-.4,0],[-.25,-.6],[0,.7],[.2,-.2],[.3,0],[1,0]].forEach(([a,b],n)=>n?x.lineTo(a*r,b*r):x.moveTo(a*r,b*r));x.stroke();x.beginPath();x.arc(r,0,r*.07,0,7);x.fill()}
+ else{x.globalAlpha=.85*t;tri(-r*.8,-r*.3,0,-r*.8,r*.8,-r*.3);x.globalAlpha=.75*t;for(let n=0;n<4;n++)x.fillRect(-r*.6+n*r*.4,-r*.2,r*.16,r*.8);x.fillRect(-r*.8,r*.6,r*1.6,r*.1)}
+ x.restore()}
+function paint(){bg();shapes.forEach(s=>draw(s,Math.min(1,(performance.now()-s.t0)/900)));if(shapes.some(s=>performance.now()-s.t0<900))raf=requestAnimationFrame(paint)}
+function stroke(cat,ok){shapes.push({k:ok?cat:'x',c:ok?C[cat]:'#5c5a6e',x:rnd(130,770),y:rnd(130,770),r:ok?rnd(90,170):rnd(150,330),a:rnd(0,6.28),t0:performance.now()});cancelAnimationFrame(raf);paint()}
+
+function start(){deck=shuf(Q.filter(q=>sel.has(q[0]))).slice(0,N);i=0;score=0;streak=0;shapes=[];tally={};sel.forEach(k=>tally[k]=[0,0]);
+ ['start','end'].forEach(id=>$(id).classList.add('hide'));$('play').classList.remove('hide');paint();show()}
+function show(){locked=false;const q=deck[i];$('cnt').textContent=`Question ${i+1} of ${deck.length}`;$('streak').textContent=streak>1?`${streak} in a row`:'';
+ $('prog').style.width=i/deck.length*100+'%';$('cat').textContent=q[0];$('cat').style.color=C[q[0]];$('q').textContent=q[1];$('why').textContent='';$('next').classList.add('hide');
+ const o=$('opts');o.innerHTML='';shuf(q.slice(2,6)).forEach((t,n)=>{const b=document.createElement('button');b.className='opt';b.innerHTML=`<kbd>${n+1}</kbd><span></span>`;b.lastChild.textContent=t;b.onclick=()=>pick(b,t);o.append(b)})}
+function pick(b,t){if(locked)return;locked=true;const q=deck[i],ok=t===q[2];
+ [...$('opts').children].forEach(e=>{e.disabled=true;if(e.lastChild.textContent===q[2])e.classList.add('ok')});if(!ok)b.classList.add('no');
+ tally[q[0]][1]++;if(ok){score++;streak++;tally[q[0]][0]++}else streak=0;stroke(q[0],ok);
+ $('why').textContent=(ok?'Yes. ':'Not quite. ')+q[6];$('next').textContent=i+1<deck.length?'Next question':'See my painting';$('next').classList.remove('hide');$('next').focus()}
+function next(){i++;i<deck.length?show():finish()}
+function finish(){$('play').classList.add('hide');$('end').classList.remove('hide');const p=score/deck.length;
+ $('title').textContent=p>.9?'Grand master of the salon.':p>.7?'A true connoisseur.':p>.45?'A promising studio.':'Every master starts with a blank canvas.';
+ $('score').textContent=`${score}/${deck.length}`;$('rows').innerHTML=Object.entries(tally).filter(([,v])=>v[1]).map(([k,v])=>`<div class="row"><b>${k.slice(0,5)}${k.length>5?'.':''}</b><span><i style="width:${v[0]/v[1]*100}%;background:${C[k]}"></i></span><em>${v[0]}/${v[1]}</em></div>`).join('')}
+
+$('begin').onclick=start;$('next').onclick=next;$('again').onclick=()=>{$('end').classList.add('hide');$('start').classList.remove('hide');shapes=[];bg()};
+$('save').onclick=()=>{const a=document.createElement('a');a.download='my-atelier-salon-painting.png';a.href=cv.toDataURL('image/png');a.click()};
+addEventListener('keydown',e=>{if($('play').classList.contains('hide'))return;if(/^[1-4]$/.test(e.key)&&!locked)$('opts').children[e.key-1]?.click();else if(e.key==='Enter'&&locked){e.preventDefault();next()}});
+shapes=[];bg();
+</script>
+</body>
+</html>
